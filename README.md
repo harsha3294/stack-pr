@@ -308,3 +308,11 @@ target=main
 reviewer=GithubHandle1,GithubHandle2
 branch_name_template=$USERNAME/$BRANCH
 ```
+
+### VMware specific options
+
+```
+[repo]
+assignee=GithubHandle1
+```
+

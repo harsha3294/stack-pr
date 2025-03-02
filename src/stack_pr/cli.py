@@ -664,7 +664,8 @@ def print_cmd_failure_details(exc: SubprocessError):
     print(f"Stderr: {cmd_stderr}")
 
 
-def create_pr(e: StackEntry, is_draft: bool, reviewer: str = ""):
+def create_pr(e: StackEntry, is_draft: bool, reviewer: str = "",
+              assignee: str = ""):
     # Don't do anything if the PR already exists
     if e.has_pr():
         return
@@ -682,6 +683,8 @@ def create_pr(e: StackEntry, is_draft: bool, reviewer: str = ""):
         "-F",
         "-",
     ]
+    if assignee:
+       cmd.extend(["--assignee", assignee])
     if reviewer:
         cmd.extend(["--reviewer", reviewer])
     if is_draft:
@@ -882,6 +885,7 @@ def command_submit(
     args: CommonArgs,
     draft: bool,
     reviewer: str,
+    assignee: str,
     keep_body: bool,
     draft_bitmask: List[bool] = None,
 ):
@@ -929,7 +933,7 @@ def command_submit(
     log(h("Submitting PRs"), level=1)
     for e_idx, e in enumerate(st):
         is_pr_draft = draft or ((draft_bitmask is not None) and draft_bitmask[e_idx])
-        create_pr(e, is_pr_draft, reviewer)
+        create_pr(e, is_pr_draft, reviewer, assignee)
 
     # Verify consistency in everything we have so far
     verify(st)
@@ -1328,6 +1332,14 @@ def create_argparser(
         help="Bitmask of whether each PR is a draft (optional).",
     )
     parser_submit.add_argument(
+        "--assignee",
+        default=os.getenv(
+            "STACK_PR_DEFAULT_ASSIGNEE",
+            default=config.get("repo", "assignee", fallback=""),
+        ),
+        help="Assignee for the PR",
+    )
+    parser_submit.add_argument(
         "--reviewer",
         default=os.getenv(
             "STACK_PR_DEFAULT_REVIEWER",
@@ -1407,6 +1419,7 @@ def main():
                 common_args,
                 args.draft,
                 args.reviewer,
+                args.assignee,
                 args.keep_body,
                 draft_bitmask=args.draft_bitmask,
             )
